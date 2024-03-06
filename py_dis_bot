@@ -1,0 +1,32 @@
+import discord
+from discord.ext import commands
+import youtube_dl
+import Conf
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='w', intents=intents)
+ytdl = youtube_dl.YoutubeDL(Conf.ytdl_format_options)
+
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user} работает')
+
+
+@bot.command()
+async def play(ctx:commands.Bot, link):
+    await ctx.send(link)
+    vo_c = await ctx.message.author.voice.channel.connect()
+    if 'https' in link:
+        info = ytdl.extract_info(link, download=False)
+    else:
+        info = ytdl.extract_info(f'ytsearch:{link}', download=False)['entries'][0]
+    data = info['formats'][0]['url']
+
+    vo_c.play(discord.FFmpegPCMAudio(executable='ffmpeg\\ffmpeg.exe', source=data, **Conf.ffmpeg_options))
+     
+
+
+bot.run(Conf.token)
